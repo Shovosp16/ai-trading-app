@@ -1,34 +1,34 @@
-let prices = []
+let prices=[]
 
 function EMA(period,data){
- let k = 2/(period+1)
- let ema = data[0]
- data.forEach(price=>{
-  ema = price*k + ema*(1-k)
+ const k=2/(period+1)
+ let ema=data[0]
+ data.forEach(p=>{
+  ema=p*k+ema*(1-k)
  })
  return ema
 }
 
-function calculateRSI(data){
- let gains=0,loss=0
+function RSI(data){
+ let gain=0,loss=0
  for(let i=1;i<data.length;i++){
-  let diff=data[i]-data[i-1]
-  if(diff>0) gains+=diff
-  else loss+=Math.abs(diff)
+  let d=data[i]-data[i-1]
+  if(d>0) gain+=d
+  else loss+=Math.abs(d)
  }
- let rs = gains/(loss||1)
+ let rs=gain/(loss||1)
  return 100-(100/(1+rs))
 }
 
-exports.calculateIndicators = (price)=>{
+exports.calculateIndicators=(price)=>{
 
  prices.push(price)
- if(prices.length>50) prices.shift()
+ if(prices.length>60) prices.shift()
 
- let rsi = calculateRSI(prices)
- let ema12 = EMA(12,prices)
- let ema26 = EMA(26,prices)
- let macd = ema12 - ema26
+ const rsi=RSI(prices)
+ const ema12=EMA(12,prices)
+ const ema26=EMA(26,prices)
+ const macd=ema12-ema26
 
- return { rsi, ema12, ema26, macd }
+ return {rsi,ema12,ema26,macd}
 }

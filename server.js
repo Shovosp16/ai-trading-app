@@ -1,60 +1,74 @@
-const express=require("express")
-const cors=require("cors")
-const bodyParser=require("body-parser")
-const WebSocket=require("ws")
+const express = require("express")
+const cors = require("cors")
+const bodyParser = require("body-parser")
 
-const {calculateIndicators}=require("./indicators")
-const {trainAI,predictAI}=require("./aiModel")
+const fetch = (...args) =>
+  import("node-fetch").then(({ default: fetch }) => fetch(...args))
 
-const app=express()
+const { calculateIndicators } = require("./indicators")
+const { trainAI, predictAI } = require("./aiModel")
+
+const app = express()
 
 app.use(cors())
 app.use(bodyParser.json())
 app.use(express.static("public"))
 
-let livePrice=0
-let tradeHistory=[]
+let livePrice = 30000
+let tradeHistory = []
 
-const binance=new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade")
-
-binance.onmessage=(msg)=>{
- const data=JSON.parse(msg.data)
- livePrice=parseFloat(data.p)
+// Binance HTTP price fetch (stable)
+async function updatePrice() {
+  try {
+    const res = await fetch(
+      "https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT"
+    )
+    const data = await res.json()
+    livePrice = parseFloat(data.price)
+  } catch (e) {
+    console.log("Price fetch failed")
+  }
 }
 
-app.get("/data",async(req,res)=>{
+setInterval(updatePrice, 3000)
 
- if(!livePrice) livePrice=30000
+// API Endpoint
+app.get("/data", async (req, res) => {
 
- const indicators=calculateIndicators(livePrice)
+  const indicators = calculateIndicators(livePrice)
 
- await trainAI({
-  ...indicators,
-  price:livePrice
- })
+  // Light AI training (low CPU)
+  if (Math.random() < 0.25) {
+    await trainAI(indicators)
+  }
 
- const ai=predictAI(indicators)
+  const ai = predictAI(indicators)
 
- if(ai.signal!=="SKIP"){
-  tradeHistory.push({
-   time:Date.now(),
-   signal:ai.signal,
-   price:livePrice
+  if (ai.signal !== "SKIP") {
+    tradeHistory.push({
+      time: Date.now(),
+      signal: ai.signal,
+      price: livePrice
+    })
+  }
+
+  res.json({
+    price: livePrice,
+    ...indicators,
+    signal: ai.signal,
+    confidence: ai.confidence
   })
- }
-
- res.json({
-  price:livePrice,
-  ...indicators,
-  signal:ai.signal,
-  confidence:ai.confidence
- })
 
 })
 
-app.get("/history",(req,res)=>{
- res.json(tradeHistory)
+// Trade history API
+app.get("/history", (req, res) => {
+  res.json(tradeHistory)
 })
 
-const PORT=process.env.PORT||3000
-app.listen(PORT,()=>console.log("Running on",PORT))
+// Railway PORT Fix
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
+  console.log("Server running on port", PORT)
+})
