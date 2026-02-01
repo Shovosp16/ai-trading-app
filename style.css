@@ -1,0 +1,31 @@
+body{
+ margin:0;
+ background:#0d1117;
+ color:white;
+ font-family:sans-serif;
+}
+
+.app{
+ padding:15px;
+}
+
+.top{
+ text-align:center;
+ font-size:22px;
+ margin-bottom:10px;
+}
+
+.card{
+ background:#161b22;
+ border-radius:15px;
+ padding:15px;
+ margin-bottom:10px;
+}
+
+.signal{
+ text-align:center;
+ font-size:26px;
+ padding:15px;
+ border-radius:15px;
+ background:#238636;
+}

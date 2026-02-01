@@ -1,0 +1,8 @@
+{
+ "name":"AI Trading App",
+ "short_name":"AITrade",
+ "start_url":"/",
+ "display":"standalone",
+ "background_color":"#0d1117",
+ "theme_color":"#0d1117"
+}
